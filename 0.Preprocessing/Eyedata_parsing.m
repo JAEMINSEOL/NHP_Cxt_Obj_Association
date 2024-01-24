@@ -32,11 +32,13 @@ rs = find(strcmp(UE_raw.Var1,'RecordingStart'));
 
 UE_parsed = UE_raw(find(strcmp(UE_raw.Var1,'SessionStart')):find(strcmp(UE_raw.Var1,'SessionEnd')),:);
 
- UE_ts = UE_raw(find(strcmp(UE_parsed.Var1,'TrialStart')),:);
+ UE_ts = UE_parsed(find(strcmp(UE_parsed.Var1,'TrialStart')),:);
 
   Datapixx_events = Datapixx_events(find(strcmp(Datapixx_events,'SessionStart')),:);
  Datapixx_ts = Datapixx_events(find(strcmp(Datapixx_events,'TrialStart')),:);
 
+
+ %%
   UE_recorded =[];
  for i=1:size(UE_recording,1)
  UE_recorded =  [UE_recorded; [UE_raw(UE_recording(i,1):UE_recording(i,2),:)]];
