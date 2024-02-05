@@ -1,0 +1,186 @@
+%%
+function [origin2, direction2, intersection3,FixPoint2,FigTitle,fig,ax1] = Eye_Plotting_InterTrial(STL_Forest,STL_City,STL_Forest_Sky,STL_City_Sky,TrialInfo_sync_recording,lap,direction,TickLog_sync_recording_info,Eye_Analog_sync_recording_info,Eye_sacc_XY_index_lp,X_lp,Y_lp)
+tic;
+%%
+origin2 = NaN(20000,5); direction2 = NaN(20000,4); intersection3 = NaN(20000,4); FixPoint2 = NaN(20000,5);
+%%
+if TrialInfo_sync_recording(8*(lap-1)+1,6)==1
+    c=1;
+    Context_STL=STL_Forest;
+    Sky_box = STL_Forest_Sky;
+    centerY= 0;
+else
+    c=2;
+    Context_STL=STL_City;
+    Sky_box = STL_City_Sky;
+    centerY = -20050;
+end
+        Dir = Dir_Name(direction);
+
+p1 = Context_STL.vertices(1:3:end,1:3);
+q1 = Context_STL.vertices(2:3:end,1:3);
+r1 = Context_STL.vertices(3:3:end,1:3);
+
+p2 = Sky_box.vertices(1:3:end,1:3); p2(isnan(p2(:,1)),:)=[];
+q2 = Sky_box.vertices(2:3:end,1:3); q2(isnan(q2(:,1)),:)=[];
+r2 = Sky_box.vertices(3:3:end,1:3); r2(isnan(r2(:,1)),:)=[];
+%%
+
+
+%%
+% id = find(and(and((TickLog_sync_recording_info(:,12)>=1),(TickLog_sync_recording_info(:,12)<=8)),and((TickLog_sync_recording_info(:,5)<=10),mod(TickLog_sync_recording_info(:,5),2)==1)));
+
+id = find(TickLog_sync_recording_info.lap==lap & TickLog_sync_recording_info.direction==direction & TickLog_sync_recording_info.on_lap>0);
+id_e = find(Eye_Analog_sync_recording_info.lap==lap & Eye_Analog_sync_recording_info.direction==direction & Eye_Analog_sync_recording_info.on_lap>0);
+
+% id = find(and(TickLog_sync_recording_info(:,12)==(l-1)*8+d,(TickLog_sync_recording_info(:,6)~=0)));
+% id_e = find(and(Eye_Analog_sync_recording_info(:,12)==(l-1)*8+d,(Eye_Analog_sync_recording_info(:,6)~=0)));
+
+[origin_cxt, direction_cxt,intersection_cxt] = Cal3DGazePosition(p2,q2,r2, time,Xpos,Ypos,X_lp,Y_lp,id,direction);
+tic
+[origin_sky, direction_sky,intersection_sky] = Cal3DGazePosition(p1,q1,r1, time,Xpos,Ypos,X_lp,Y_lp,id,direction);
+ toc
+intersection_cxt(find(intersection_sky(:,4)~=0),:)=0;
+
+FixPoint = sortrows(unique(vertcat(FindFixationPoint(Eye_sacc_XY_index_lp(:,1),X_lp,Y_lp,id_e,'first'),FindFixationPoint(Eye_sacc_XY_index_lp(:,1),X_lp,Y_lp,id_e,'last')),'rows'),3);
+
+%  FixPoint = FindFixationPoint(Eye_sacc_XY_index_lp(:,1),X_lp,Y_lp,id_e,'All');
+%%
+direction_sky(:,4)=0; direction_cxt(:,4)=0;
+intersection2 = sortrows(vertcat(intersection_sky,intersection_cxt),4);
+intersection2(find(intersection2(:,4)==0),:)=[];
+
+intersection = intersection_sky;
+intersection(find(intersection(:,4)==0),:)=[];
+
+i=1; FixPoint(:,4:6) =0;  
+
+if ~isempty(FixPoint)
+    FixPoint(:,5) = id(knnsearch(origin_sky(:,5),FixPoint(:,3)));
+    for t=1:length(id)
+
+        if find(id(t)==FixPoint(:,5))~=0
+            FixPoint(i,4)=t;
+            g = find(intersection_cxt(:,4)==origin_cxt(t,4));
+            f = find(intersection_sky(:,4)==origin_sky(t,4));
+            if ~isempty(f)
+                FixPoint(i,6)=1;
+            elseif ~isempty(g)
+                FixPoint(i,6)=2;
+            end
+            i=i+1;
+        end
+        
+    end
+    
+    
+    
+    for i = 1:size(FixPoint,1)
+        if FixPoint(i,6)==1
+            Fx = intersection_sky(FixPoint(i,4),1); Fy = intersection_sky(FixPoint(i,4),2); Fz = intersection_sky(FixPoint(i,4),3);
+            if and(and(Fx>0,Fx<10700),and(Fy>centerY-300,Fy<centerY+300))
+                if Fz <500
+                    FixPoint(i,6)=3;
+                end
+                
+            elseif and(Fx>=10000,Fx<16000)
+                FixPoint(i,6)=4;
+            elseif or(Fx>=16000,Fx<0)
+                FixPoint(i,6)=5;
+            end
+        end
+    end
+
+end
+FixPoint(:,5)=FixPoint(:,6); FixPoint(:,6)=[];
+%%
+fig=1;ax1=1;
+ FigTitle = ['Lap' num2str(lap) '-' Dir ];
+% 
+% 
+% fig = figure;
+% ax1 = axes;
+% % patch(STL_City_Sky,'FaceColor',       [0.8 0.8 0.8], ...
+% %     'EdgeColor',       'none',        ...
+% %     'FaceLighting',    'gouraud',     ...
+% %     'AmbientStrength', 0.15);
+% hold on
+% patch(ax1,F,'FaceColor',       [0.8 0.8 0.8], ...
+%     'EdgeColor',       'none',        ...
+%     'FaceLighting',    'gouraud',     ...
+%     'AmbientStrength', 0.15);
+% camlight('headlight');
+% material('dull');
+% axis('image');
+% view([50 35]);
+% alpha(0.7)
+% 
+% 
+% hold on
+% 
+% 
+% 
+% % FixPoint(FixPoint(:,4)>length(intersection_f),:)=[];
+% % FixPoint(FixPoint(:,4)==0,:)=[];
+% if FixPoint(1,4)~=0
+%     FixPoint(FixPoint(:,4)==0,:)=[];
+%     FixPoint(FixPoint(:,4)>size(intersection_f,1),:)=[];
+% scatter3(ax1,intersection_f(FixPoint(:,4),1),intersection_f(FixPoint(:,4),2),intersection_f(FixPoint(:,4),3),100,'g')
+% end
+% 
+% if c==1
+%     ylim([-4000 4000])
+% elseif c==2
+%     
+%     ylim([-25000 -15000])
+% end
+% 
+% hold on
+% TArray = intersection;
+% is = 1;
+% ie = length(TArray);
+% x = TArray(:,1); y = TArray(:,2); z = TArray(:,3); t = TArray(:,4);
+% 
+% colormap(flipud(jet))
+% surf(ax1, [x(is:ie) x(is:ie)], [y(is:ie) y(is:ie)], [z(is:ie) z(is:ie)], [t(is:ie)-origin_f(1,4) t(is:ie)-origin_f(1,4)]/10^6, ...  % Reshape and replicate data
+%     'FaceColor', 'none', ...    % Don't bother filling faces with color
+%     'EdgeColor', 'interp', ...  % Use interpolated color for edges
+%     'LineWidth', 2);            % Make a thicker line
+% 
+% hold on
+% 
+% 
+% c = colorbar('Location','southoutside');
+% c.Label.String = 'Time(s)';
+% set(gca,'FontSize',20,'FontWeight','b')
+% xticks([]); yticks([]); zticks([]);
+%  title(FigTitle)
+
+ 
+%%
+sz=20000;
+
+if length(origin_sky)<=sz
+    origin2(1:length(origin_sky),1:5) = origin_sky(:,1:5);
+else
+    origin2(1:sz,1:5) = origin_sky(1:sz,1:5);
+end
+if length(origin_sky)<=sz
+    direction2(1:length(direction_sky),1:4) = direction_sky(:,1:4);
+else
+    direction2(1:sz,1:4) = direction_sky(1:sz,1:4);
+end
+
+if length(intersection2)<=sz
+    intersection3(1:length(intersection2),1:4) = intersection2(:,1:4);
+else
+    intersection3(1:sz,1:4) = intersection2(1:sz,1:4);
+end
+
+if length(FixPoint)<=sz
+    FixPoint2(1:length(FixPoint),1:5) = FixPoint(:,1:5);
+else
+    FixPoint2(1:sz,1:5) = FixPoint(1:sz,1:5);
+end
+
+end

@@ -1,0 +1,145 @@
+% 
+% fv_f = stlread('Forest_context_b.stl');
+% 
+% 
+% patch(fv_f,'FaceColor',       [0.8 0.8 1.0], ...
+%          'EdgeColor',       'none',        ...
+%          'FaceLighting',    'gouraud',     ...
+%          'AmbientStrength', 0.15);
+% 
+% % Add a camera light, and tone down the specular highlighting
+% camlight('headlight');
+% material('dull');
+% 
+% % Fix the axes scaling, and set a nice view angle
+% axis('image');
+% view([-135 35]);
+
+%%
+fv_c = stlread('City_context_b.stl');
+%%
+for i = 1:size(fv_c.faces,1)
+    for j = 1:3
+        a = fv_c.faces(i,j);
+        vertices_by_f(i,(3*j-2):3*j)=fv_c.vertices(a,:);
+    end
+end
+%%
+[origin, direction, intersection] = Cal3DGazePosition(vertices_by_f, TickLog_sync_recording_info, Eye_Analog_sync_recording);
+
+% 
+% id = find(spk_run(:,1) .* spk_context(:,2) .* spk_void);
+% spk_ROI = horzcat(SpikeData_info(id,2:3),spk_eye(id,2:3));
+% 
+% ox = spk_ROI(:,1);
+% oy = -spk_ROI(:,2);
+% oz = ones(length(id),1) * 141;
+% origin = [ox oy oz];
+% 
+% dx = ones(length(id),1)*109;
+% dy = -(spk_ROI(:,3)-960)*(218.75/1920);
+% dz = 240.625-(spk_ROI(:,4)-540)*(240.625/1080)-141;
+% direction = [dx dy dz];
+% for i = 1:length(direction)
+%     direction(i,:) = direction(i,:)/max(direction(i,:));
+% end
+% 
+% c=1;
+% clear intersection
+% for i = 1:length(origin)
+%     intersection_temp = [];
+% for j = 1:size(fv_c.faces,1)
+%     p1 = vertices_by_f(j,1:3);
+%     p2 = vertices_by_f(j,4:6);
+%     p3 = vertices_by_f(j,7:9);
+% [flag, u, v, t] = RayTriangleIntersection(origin(i,:), direction(i,:), p1, p2, p3);
+% if flag ==1
+%     intersection_temp(c,:) = origin(i,:) + t*direction(i,:);
+%     c=c+1;
+% end
+% end
+% 
+%     intersection_temp(find(intersection_temp(:,1)==0),:) = [];
+%     intersection_temp(find(intersection_temp(:,1)<origin(i,1)),:) = [];
+%     if ~isempty(intersection_temp)
+% intersection(i,:) = intersection_temp(find(intersection_temp(:,1)==min(intersection_temp(:,1))),:)
+% end
+% 
+% end
+
+
+
+figure;
+patch(fv_c,'FaceColor',       [0.8 0.8 1.0], ...
+         'EdgeColor',       'none',        ...
+         'FaceLighting',    'gouraud',     ...
+         'AmbientStrength', 0.15);
+
+% Add a camera light, and tone down the specular highlighting
+camlight('headlight');
+material('dull');
+
+% Fix the axes scaling, and set a nice view angle
+axis('image');
+view([-135 35]);
+
+
+% id = find(spk_run(:,1) .* spk_context(:,2) .* spk_void);
+% spk_ROI = horzcat(SpikeData_info(id,2:3),spk_eye(id,2:3));
+% 
+% ox = spk_ROI(:,1);
+% oy = -spk_ROI(:,2);
+% oz = ones(length(id),1) * 141;
+% origin = [ox oy oz];
+% 
+% dx = ones(length(id),1)*109;
+% dy = -(spk_ROI(:,3)-960)*(218.75/1920);
+% dz = 240.625-(spk_ROI(:,4)-540)*(240.625/1080)-141;
+% direction = [dx dy dz];
+% 
+% hold on
+% id = spk_context(:,2).* sum(spk_area(:,2:10),2).* spk_void ;
+% x = SpikeData_info(find(id),2);
+% y = SpikeData_info(find(id),3)*-1;
+% z = ones(length(x),1)*200;
+% scatter3(ox+dx,oy+dy,oz+dz,5,'r','filled')
+
+
+% id = find(spk_run(:,2) .* spk_context(:,2) .* spk_void);
+% spk_ROI = horzcat(SpikeData_info(id,2:3),spk_eye(id,2:3));
+% 
+% ox = spk_ROI(:,1);
+% oy = -spk_ROI(:,2);
+% oz = ones(length(id),1) * 141;
+% origin = [ox oy oz];
+% 
+% dx = -ones(length(id),1)*109;
+% dy = -(spk_ROI(:,3)-960)*(218.75/1920);
+% dz = 240.625-(spk_ROI(:,4)-540)*(240.625/1080)-141;
+% direction = [dx dy dz];
+
+hold on
+
+
+intersection2 = intersection;
+intersection2(find(intersection(:,1)==0),:) = [];
+
+% origin2 = origin;
+% 
+% direction2 = direction;
+% 
+% 
+% origin2(find(intersection(:,1)==0),:) = [];
+% direction2(find(intersection(:,1)==0),:) = [];
+
+scatter3(intersection2(:,1),intersection2(:,2),intersection2(:,3),30,'k','filled')
+% scatter3(origin2(:,1),origin2(:,2),origin2(:,3),30,'k','filled')
+% quiver3(origin2(:,1), origin2(:,2), origin2(:,3), direction2(:,1), direction2(:,2), direction2(:,3), 15);
+
+% 
+% hold on
+% id = spk_context(:,2).* spk_area(:,11).* spk_void ;
+% x = SpikeData_info(find(id),2);
+% y = SpikeData_info(find(id),3)*-1;
+% z = ones(length(x),1)*200;
+% scatter3(x,y,z,5,'k','filled')
