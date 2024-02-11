@@ -11,8 +11,8 @@ ROOT.Datapixx = [ROOT.Datapixx '\' fl];
 [temp_list_2,Datapixx_ticks] = get_dat_files(ROOT.Datapixx, fl, 'TickLog');
 [temp_list_3,Datapixx_events] = get_dat_files(ROOT.Datapixx, fl, 'EventLog');
 
-subplot(1,2,1)
-scatter(Datapixx_eye(:,1),Datapixx_eye(:,2))
-subplot(1,2,2)
+% subplot(1,2,1)
+% scatter(Datapixx_eye(:,1),Datapixx_eye(:,2))
+% subplot(1,2,2)
 % scatter(Datapixx_eye_adj(:,1),Datapixx_eye_adj(:,2))
 

@@ -71,6 +71,7 @@ choice = UE_log.parsed.Var1(find(strncmp(UE_log.parsed.Var1,'Choice',6)));
 type = UE_log.parsed.Var5(find(strcmp(UE_log.parsed.Var1,'TrialType')));
 type(end)=[];
 for t=1:size(type,1)
+    UE_log.trials.Trial(t) = t;
 UE_log.trials.Context(t) = str2double(type{t}(1));
 UE_log.trials.Direction(t) = str2double(type{t}(2));
 UE_log.trials.Location(t) = str2double(type{t}(3));
@@ -80,6 +81,12 @@ if strcmp(choice{t},'ChoiceLeft'), UE_log.trials.Choice(t)=0; else, UE_log.trial
     UE_log.trials.ObjectLeft{t} = object_code(str2double(type{t}(5)));
     UE_log.trials.ObjectRight{t} = object_code(str2double(type{t}(6)));
 end
+
+%%
+joystick_l = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'JoystickLeft'))); 
+joystick_r = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'JoystickRight'))); 
+joystick = [joystick_l -1*ones(size(joystick_l,1),1); joystick_r ones(size(joystick_r,1),1)];
+UE_log.Joystick = sortrows(joystick,1);
 %%
 lap_s = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'LapStart'))); lap_s(end)=[];
 lap_e = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'LapEnd')));
@@ -132,6 +139,13 @@ lap=zeros(size(Datapixx_eye,1),1); state=zeros(size(Datapixx_eye,1),1); turn=zer
 
   Datapixx_eye_T.lap = lap; Datapixx_eye_T.on_lap = state; Datapixx_eye_T.on_turn = turn;
 
+  %%
+  x=UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'Tick'))); y=UE_log.parsed.Var3(find(strcmp(UE_log.parsed.Var1,'Tick'))); y2=UE_log.parsed.Var4(find(strcmp(UE_log.parsed.Var1,'Tick'))); 
+  xv = Datapixx_eye_T.time;
+  Datapixx_eye_T.Xpos = interp1(x,y,xv,'nearest','extrap');   Datapixx_eye_T.Ypos = interp1(x,y2,xv,'previous','extrap');
+
+
+  %%
 
 function obj = object_code(num)
 
