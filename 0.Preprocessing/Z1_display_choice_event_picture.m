@@ -6,7 +6,10 @@ for lap=1:round(size(UE_log.trials,1)/8)
     t1=(lap-1)*8+1; t2=(lap-1)*8+8;
     is=find(Datapixx_eye_T.lap==lap,1,'first'); ie=find(Datapixx_eye_T.lap==lap,1,'last');
     if ~isempty(ie)
-        x = X_lp_deg(is:ie); y= Y_lp_deg(is:ie);  idx = Datapixx_eye_T.saccade(is:ie,1); idt = Datapixx_eye_T.trial(is:ie); ids = Datapixx_eye_T.on_trial(is:ie);
+        x = X_lp_deg(is:ie); y= Y_lp_deg(is:ie);  idx = Datapixx_eye_T.saccade(is:ie,1); 
+
+
+        idt = Datapixx_eye_T.trial(is:ie); ids = Datapixx_eye_T.on_trial(is:ie);
         vx = Eye_Speed_deg_inst_lp(is:ie,1); vy = Eye_Speed_deg_inst_lp(is:ie,2); ax = Eye_Acc_deg_inst_lp(is:ie,1); ay = Eye_Acc_deg_inst_lp(is:ie,2); pup=Datapixx_eye_T.pupil(is:ie);
         idturn=Datapixx_eye_T.on_turn(is:ie); ids2 = Datapixx_eye_T.on_lap(is:ie);
         turn_s=find(idturn,1,'first'); turn_e=find(idturn,1,'last');
@@ -130,12 +133,15 @@ text(500,1600,'Fixation','color','r'); text(1500,1600,'Ocular following (drift)'
             cho = UE_log.trials.CorrectAnswer(t); if cho==0, cho_s='Left'; else, cho_s='Right'; end
             if UE_log.trials.Choice(t)==UE_log.trials.CorrectAnswer(t), cor_s='Correct'; else, cor_s='Wrong'; end
             obj_l = UE_log.trials.ObjectLeft{t}; obj_r = UE_log.trials.ObjectRight{t};
-            loc = tr+1;
+            loc = tr; if loc==0, loc=8; end
 
             figure('position',[-2419,0,1500, 1000])
             is=find(Datapixx_eye_T.trial==t,1,'first'); ie=find(Datapixx_eye_T.trial==t,1,'last');
             if ~isempty(ie)
-                x = X_lp_deg(is:ie); y= Y_lp_deg(is:ie);  idx = Datapixx_eye_T.saccade(is:ie,1); idt = Datapixx_eye_T.trial(is:ie); ids = Datapixx_eye_T.on_trial(is:ie);
+%                 x = X_lp_deg(is:ie); y= Y_lp_deg(is:ie);  
+                    x = X_lp(is:ie); y= Y_lp(is:ie); 
+x1=(x+5)*2000/10; y1=(y+5)*1125/10;
+                idx = Datapixx_eye_T.saccade(is:ie,1); idt = Datapixx_eye_T.trial(is:ie); ids = Datapixx_eye_T.on_trial(is:ie);
                 PhaseList = {'Before cursor (-500 ~ 0ms)',['Cursor on (0 ~ ' num2str(sum(ids==2)) 'ms)'],['Object on (' num2str(sum(ids==2)) ' ~ ' num2str(sum(ids==2)+sum(ids==3)) 'ms)'],...
                     ['Choice Available (' num2str(sum(ids==2)+sum(ids==3)) ' ~ ' num2str(sum(ids==2)+sum(ids==3)+sum(ids==4)) 'ms)']};
 
@@ -143,21 +149,29 @@ text(500,1600,'Fixation','color','r'); text(1500,1600,'Ocular following (drift)'
                     subplot(2,2,s); hold on
 
                     im = imread(['D:\NHP project\실험 셋업 자료\Unreal Assets\with disc\Cxt' num2str(cxt) '_Loc' num2str(loc) '.png']);
+                    imx = rgb2gray((im));
 
-                    imagesc(rgb2gray((im))); colormap('gray')
+                    imgl = imread(['D:\NHP project\실험 셋업 자료\Unreal Assets\' obj_l '_Left.png']);
+            imglx=rgb2gray((imgl));
+            imgr = imread(['D:\NHP project\실험 셋업 자료\Unreal Assets\' obj_r '_Right.png']);
+            imgrx=rgb2gray((imgr));
 
-                    x = X_lp(is:ie); y= Y_lp(is:ie); 
-% x = Datapixx_eye(is:ie1); y= Datapixx_eye(is:ie,2); 
-x1=(x+5)*2000/10; y1=(y+5)*1125/10;
+                    imagesc(imx); colormap('gray')
+
+                               alphaData=ones(1127,2002); alphaData(imglx==0)=0;
+                imagesc(imglx, 'AlphaData', alphaData)
+
+                alphaData=ones(1127,2002); alphaData(imgrx==0)=0;
+                imagesc(imgrx, 'AlphaData', alphaData)
+
+
                     % x1=(x+30.72)*2000/54.73; y1=(y+18.93)*1125/36.5685;
 %                     x1=(x+29)*2000/54.73; y1=(y+17)*1125/36.5685;
                     xs=x1(ids==s); ys=y1(ids==s);
 %                     plot(x1(ids==s),y1(ids==s),'k')
                     %                     scatter(x1(ids==s & idx==0),y1(ids==s & idx==0),15,'g','filled')
-                    scatter(x1(ids==s & idx==3),y1(ids==s & idx==3),sz,[0.4940 0.1840 0.5560],'filled')
-                    scatter(x1(ids==s & idx==3),y1(ids==s & idx==3),sz,'m','filled')
-                    scatter(x1(ids==s & idx==1),y1(ids==s & idx==1),sz,'r','filled')
-                    scatter(x1(ids==s & idx==2),y1(ids==s & idx==2),sz,'c','filled')
+%                     scatter(x1(ids==s & idx==3),y1(ids==s & idx==3),sz,[0.4940 0.1840 0.5560],'filled')
+
                     k=1; temp=idx(ids==s); temp(1)=1; temp(end)=1; sac_arrow=[];
                     for sa=1:size(temp,1)-1
                         if temp(sa)~=0 && temp(sa+1)==0, sac_arrow(k,1)=sa; end
@@ -165,10 +179,12 @@ x1=(x+5)*2000/10; y1=(y+5)*1125/10;
                     end
                     for sa=1:size(sac_arrow,1)
                         quiver(xs(sac_arrow(sa,1)),ys(sac_arrow(sa,1)), xs(sac_arrow(sa,2))-xs(sac_arrow(sa,1)), ys(sac_arrow(sa,2))-ys(sac_arrow(sa,1)),...
-                            'color','w','LineWidth',1,'autoscale','off')
+                            'color','w','LineWidth',2,'autoscale','off')
                     end
 
-
+                    scatter(x1(ids==s & idx==3),y1(ids==s & idx==3),sz,'m','LineWidth',1)
+                    scatter(x1(ids==s & idx==1),y1(ids==s & idx==1),sz,'r','LineWidth',1)
+                    scatter(x1(ids==s & idx==2),y1(ids==s & idx==2),sz,'c','LineWidth',1)
 
                     text(x1(find((ids==s),1,'first')),y1(find((ids==s),1,'first'))-50,'st','color','r','fontweight','b');
                     text(x1(find((ids==s),1,'last')),y1(find((ids==s),1,'last'))-50,'end','color','r','fontweight','b')
