@@ -1,7 +1,8 @@
 function [Datapixx_eye_T,Datapixx_events_T,UE_log] = B_Unreal_parsing(ROOT,Animal_id,date,Datapixx_events,Datapixx_eye)
-
+UE_log=struct;
 UE_log.raw = readtable([ROOT.Unreal '\' [Animal_id '_' date '.csv']]);
 UE_log.ticks = UE_log.raw(strcmp(UE_log.raw.Var1,'Tick'),:);
+if isempty(UE_log.ticks), UE_log.ticks = UE_log.raw(strcmp(UE_log.raw.Var1,'X'),:); end
 
 rs = find(strcmp(UE_log.raw.Var1,'RecordingStart'));
  re = find(strcmp(UE_log.raw.Var1,'RecordingEnd'));
@@ -13,20 +14,19 @@ UE_log.parsed = UE_log.raw(find(strcmp(UE_log.raw.Var1,'SessionStart')):find(str
 
  UE_log.ts = UE_log.parsed(find(strcmp(UE_log.parsed.Var1,'CursorOn')),:);
 
+  UE_log.tx = UE_log.parsed(find(~strcmp(UE_log.parsed.Var1,'Tick')),:);
+
   Datapixx_ts = Datapixx_events(find(strcmp(Datapixx_events,'CursorOn')),:);
 
-%     Datapixx_tt = Datapixx_events(find(strcmp(Datapixx_events,'TrialType')),2);
-%     UE_log.tt = UE_log.parsed.Var5(find(strcmp(UE_log.parsed.Var1,'TrialType')));
-
-
-%      x = UE_log.parsed.Var2(find(strcmp(UE_log.parsed.Var1,'Tick')));
      x = UE_log.ts.Var2;
      xv = UE_log.parsed.Var2;
 
-      ST_time = Datapixx_events{find(strcmp(Datapixx_events,'VoidOff')),2};
-  ED_time = Datapixx_events{find(strcmp(Datapixx_events,'SessionEnd')),2};
-%   y = Datapixx_ticks((Datapixx_ticks(:,1))>=ST_time & (Datapixx_ticks(:,1))<=ED_time,1);
   y = cell2mat(Datapixx_ts(:,2));
+
+    if isempty(y)
+        Datapixx_ts = Datapixx_events(find(strcmp(Datapixx_events.name,'CursorOn')),:);
+        y=cell2mat(Datapixx_ts.time);
+    end
 
 yv = interp1(x,y,xv,'linear','extrap');
 
@@ -57,7 +57,11 @@ end
 Datapixx_events = [temp;Datapixx_events];
 
 %%
+if iscell(Datapixx_events)
 Datapixx_events_T = cell2table(Datapixx_events,'VariableNames',["name","time","type"]);
+else
+    Datapixx_events_T=Datapixx_events;
+end
 trial_s = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'TrialStart')));
 trial_e = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'TrialEnd')));
 trial_1 = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'CursorOn')));
@@ -65,10 +69,18 @@ trial_2 = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'ObjOn')));
 trial_3 = UE_log.parsed.Time_adjust(find(strcmp(UE_log.parsed.Var1,'CursorBlue')));
 T=[trial_s trial_1 trial_2 trial_3 trial_e];
 UE_log.trials = array2table(T,'VariableNames',["Start","CursorOn","ObjOn","CursorBlue","End"]);
-%%
+%% trial type indexing
 choice = UE_log.parsed.Var1(find(strncmp(UE_log.parsed.Var1,'Choice',6)));
-
 type = UE_log.parsed.Var5(find(strcmp(UE_log.parsed.Var1,'TrialType')));
+if ~iscell(type)
+    type2={};
+    for t=1:size(type,1)
+        type2{t,1}=num2str(type(t));
+    end
+    type=type2;
+end
+
+
 type(end)=[];
 for t=1:size(type,1)
     UE_log.trials.Trial(t) = t;

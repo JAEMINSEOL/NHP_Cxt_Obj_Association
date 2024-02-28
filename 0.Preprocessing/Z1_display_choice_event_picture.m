@@ -1,5 +1,7 @@
 % Z1_display_choice_event_picture
 sz=60;
+ROOT.fig_lap = ['X:\E-Phys Analysis\NHP project\Property sheet\Preprocessing\lap\' Animal_id '_' date];
+ROOT.fig_trial = ['X:\E-Phys Analysis\NHP project\Property sheet\Preprocessing\trial\' Animal_id '_' date];
 %% display
 for lap=1:round(size(UE_log.trials,1)/8)
     %%
@@ -156,13 +158,13 @@ x1=(x+5)*2000/10; y1=(y+5)*1125/10;
             imgr = imread(['D:\NHP project\실험 셋업 자료\Unreal Assets\' obj_r '_Right.png']);
             imgrx=rgb2gray((imgr));
 
-                    imagesc(imx); colormap('gray')
+                    imagesc(im); colormap('gray')
 
                                alphaData=ones(1127,2002); alphaData(imglx==0)=0;
-                imagesc(imglx, 'AlphaData', alphaData)
+                imagesc(imgl, 'AlphaData', alphaData)
 
                 alphaData=ones(1127,2002); alphaData(imgrx==0)=0;
-                imagesc(imgrx, 'AlphaData', alphaData)
+                imagesc(imgr, 'AlphaData', alphaData)
 
 
                     % x1=(x+30.72)*2000/54.73; y1=(y+18.93)*1125/36.5685;
@@ -198,7 +200,7 @@ x1=(x+5)*2000/10; y1=(y+5)*1125/10;
                 end
 
                 sgtitle([Animal_id '-' date '-' 'trial ' num2str(t) ', ' cxt_s ', ' dir_s ', loc '  num2str(UE_log.trials.Location(t)) ', ' obj_l '/' obj_r ', ' cho_s '(' cor_s ')'],'fontsize',20','FontWeight','b')
-                saveas(gca,[ROOT.fig_trial '\' Animal_id '-' date '-' 'trial ' num2str(t) '.png'])
+                saveas(gca,[ROOT.fig_trial '\Color_deg_' Animal_id '-' date '-' 'trial ' num2str(t) '.png'])
                 close all
             end
         end

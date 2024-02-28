@@ -1,23 +1,41 @@
 clear all; close all;
 % eye_data_preprocessing
 
-ROOT.Mother = 'Z:\NHP';
+ROOT.Mother = 'Z:\NHP\Data';
 ROOT.Program = ['D:\NHP project\Program'];
+ROOT.Save = 'X:\E-Phys Analysis\NHP project';
 addpath(genpath(ROOT.Program))
 addpath(genpath('D:\Modules'))
 
-date = '20200108';
+
 Animal_id = 'Nabi';
 Task_id = 'Cxt-Obj Association_6 Objects';
 
-ROOT.fig_lap = ['D:\NHP project\분석 관련\Property sheet\Preprocessing\lap\' Animal_id '_' date]; if ~exist(ROOT.fig_lap), mkdir(ROOT.fig_lap); end
-ROOT.fig_trial = ['D:\NHP project\분석 관련\Property sheet\Preprocessing\trial\' Animal_id '_' date]; if ~exist(ROOT.fig_trial), mkdir(ROOT.fig_trial); end
+ROOT.Raw.Mother = [ROOT.Mother '\' Animal_id '\Behavior\' Task_id];
+fd = dir(ROOT.Raw.Mother);
 
+Session_summary = table;
 
-ROOT.Datapixx = [ROOT.Mother '\Data\' Animal_id '\Behavior\' Task_id '\' date '\Datapixx'];
-ROOT.Unreal = [ROOT.Mother '\Data\' Animal_id '\Behavior\' Task_id '\' date '\Unreal'];
+for f=87:87
+% for f=1:size(fd,1)
+    if length(fd(f).name)<8, continue; end
 
+date = fd(f).name;
 
+% ROOT.fig_lap = [ROOT.Save '\Property sheet\Preprocessing\lap\' Animal_id '_' date]; if ~exist(ROOT.fig_lap), mkdir(ROOT.fig_lap); end
+% ROOT.fig_trial = [ROOT.Save '\Property sheet\Preprocessing\trial\' Animal_id '_' date]; if ~exist(ROOT.fig_trial), mkdir(ROOT.fig_trial); end
+
+ROOT.Datapixx = [ROOT.Mother '\' Animal_id '\Behavior\' Task_id '\' date '\Datapixx'];
+ROOT.Unreal = [ROOT.Mother '\' Animal_id '\Behavior\' Task_id '\' date '\Unreal'];
+
+temp=table;
+temp.session = str2double(date);
+temp.Behavior = logical(exist([ROOT.Unreal '\' Animal_id '_' date '.csv']));
+temp.Datapixx = logical(exist([ROOT.Datapixx]));
+temp.Error=1;
+if temp.Datapixx>0
+
+    try
 [Datapixx_eye,Datapixx_ticks,Datapixx_events] = A_Eyedata_import(ROOT,date);
 
 [Datapixx_eye_T,Datapixx_events,UE_log] = B_Unreal_parsing(ROOT,Animal_id,date,Datapixx_events,Datapixx_eye);
@@ -32,9 +50,27 @@ Datapixx_eye_T.saccade = Eye_sacc_XY_index_lp(:,2);
 Datapixx_eye_T.saccade = Eye_sacc_XY_index_lp_new;
 % Calibration_Check(Datapixx_eye,Datapixx_events)
 
+    save([ROOT.Save '\Eye_parsed\' Animal_id '_' date '.mat'],'Datapixx_eye_T','UE_log','Datapixx_events','NonSacc')
+    temp.Error=0;
+    catch
+        disp([date ' session is failed'])
+        temp.Error=1;
+    end
+end
+
+Session_summary = [Session_summary; temp];
+%%
+
+l=1;
+end
+% writetable(Session_summary,[ROOT.Save '\' Animal_id '_SessionSummary.xlsx'],'writemode','replacefile')
+
+load([ROOT.Program '\Image\STLImportedContexts.mat'])
+
+load('D:\NHP project\분석 관련\Property sheet\3DRecon_Nabi_20200108.mat')
+
 Z3_display_lap_video
 %% Load Context .stl Image
-load([ROOT.Program '\Image\STLImportedContexts.mat'])
 
 % cd([program_folder '\Image'])
 % 
@@ -74,7 +110,7 @@ load([ROOT.Program '\Image\STLImportedContexts.mat'])
 % origin = NaN(nLap,8,20000,5); intersection = NaN(nLap,8,20000,4); direction = NaN(nLap,8,20000,4); FixPoint_InterTrial = NaN(nLap,8,20000,5);
 %% Inter Trial Interval 3D Eyegaze Map
 tic;
-l=1; d=1;
+l=1; d=2;
 [origin(l,d,:,:), direction(l,d,:,:), intersection(l,d,:,:),FixPoint_InterTrial(l,d,:,:),FigTitle,fig,ax1] = Eye_Plotting_InterTrial(STL_Forest,STL_City,STL_Forest_Sky,STL_City_Sky,...
     2,l,d,Datapixx_eye_T,Eye_sacc_XY_index_lp(:,1),X_lp,Y_lp);
 cd([ROOT.Program '\EyeData'])
@@ -85,6 +121,11 @@ toc;
 
 save('Eye_InterTrial.mat','FixPoint_InterTrial')
 toc;
+
+%% intersection interp to Datapixx_eye_T
+
+x=intersection_cxt(:,4);
+y=Datapixx_eye_T.time;
 
 %%
 
